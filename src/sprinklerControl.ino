@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <MQTT.h>
+#include <ArduinoOTA.h>
 
 #include "conf.h"
 
@@ -10,7 +11,6 @@ const int ledPin = 1;
 WiFiClient net;
 MQTTClient client;
 
-bool sprinklerState = false;
 volatile int pulseCount = 0;
 long prevTime = millis();
 
@@ -33,11 +33,9 @@ void messageReceived(String &topic, String &payload) {
     String subTopic = topic.substring(ROOT_TOPIC.length());
     if (subTopic == "/setState") {
         if (payload == "1") {
-            digitalWrite(switchPin, HIGH);
-            digitalWrite(ledPin, HIGH);
+            setValve(true);
         } else {
-            digitalWrite(switchPin, LOW);
-            digitalWrite(ledPin, LOW);
+            setValve(false);
         }
     } else if (subTopic == "/postFlow") {
         long curTime = millis();
@@ -56,13 +54,17 @@ void setup() {
     pinMode(flowPin, INPUT);
     attachInterrupt(flowPin, pulseCounter, FALLING);
 
+    setValve(false);
+
     client.begin(MQTT_BROKER, net);
     client.onMessage(messageReceived);
 
     connect();
+    ArduinoOTA.begin();
 }
 
 void loop() {
+    ArduinoOTA.handle();
     client.loop();
     delay(1000); // fixes some issues with WiFi stability
 
@@ -75,11 +77,12 @@ void loop() {
 }
 
 
-/*
-Insterrupt Service Routine
- */
 void pulseCounter()
 {
-  // Increment the pulse counter
   pulseCount++;
+}
+
+void setValve(bool state) {
+    digitalWrite(switchPin, state);
+    digitalWrite(ledPin, !state);
 }
