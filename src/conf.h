@@ -1,5 +1,5 @@
 #define WIFI_SSD "GhettoWiFi"
-#define WIFI_PASS "91Fb1de734"
+#define WIFI_PASS "password"
 
 // #define MQTT_BROKER "192.168.1.236"
 #define MQTT_BROKER "192.168.1.45"
